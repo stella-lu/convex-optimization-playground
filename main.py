@@ -1,38 +1,57 @@
 import numpy as np
+import matplotlib.pyplot as plt
 
 lambdaVal = 69
-n = 3
-x = [1, 2, 3] # Should be of length n
-
-rand = np.random.randn(n, n)
-# A is positive definite 
-A = rand @ rand.T + np.eye(n) * lambdaVal
-
-def f(x):
-	# f(x) = x^T*A*x
-	return 0.5 * x.T @ A @ x
+sizeOfMatrix = 2
 
 # Initial x and B values
-x = np.random.randn(n) * 1000.0
-B = np.eye(n)
+x = np.random.randn(sizeOfMatrix, 1)
+B = np.eye(sizeOfMatrix) * 2000
+
+rand = np.random.randn(sizeOfMatrix, sizeOfMatrix)
+A = rand @ rand.T + np.eye(sizeOfMatrix) * lambdaVal # A is positive definite 
+
+testVals = []
+xAxis = []
+
+def f(v):
+	# f(v) = 0.5 * v^T * A * v
+	# multiply by 0.5 now so that when taking the derivative
+	# we only have to multiply A by x.
+	return 0.5 * v.T @ A @ v
 
 def bfgs():
-	# derivative of f = 2Ax
-	f_derivative = np.dot(A, x)
-	p_k = -B*f_derivative
+	# Returns B_{k+1}
+	# Derivative of x.T @ A @ x = 2Ax
+	global x, B
+	f_derivative = A @ x
 
-
-
-	# Line search in direction p_k to find x_k+1 (golden section search, fixed step size)
-
-
-	# Find s_k, y_k, p_k, 
-
-
-
-
+	p = -B @ f_derivative
+	x_next = x + 0.1 * p # Line search in direction p to find x_k+1 (golden section search, fixed step size)
+	s = x_next - x
+	y = A @ x_next - f_derivative
+	x = x_next 
+	B = s @ np.linalg.pinv(y)
+	return B
 
 # Test that BFGS works
 # 1. Collect all xs throughout the descent in a list
 # 2. plot f(x) over time gets smaller
 # 3. Make sure f(x) goes to 0
+def test():
+	for i in range(100):
+		testVals.append(f(x)[0][0])
+		xAxis.append(i)
+		bfgs()
+
+	#np.set_printoptions(suppress=True)
+	print(testVals)
+
+def main():
+	test()
+
+main()
+
+plt.plot(xAxis, testVals)
+plt.show()
+
